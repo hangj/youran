@@ -94,7 +94,7 @@ impl Db {
 
     pub fn clear(&self) -> rusqlite::Result<usize> {
         self.conn
-            .execute(&format!("DELETE FROM {TABLE_NAME}"), ())
+            .execute(&format!("TRUNCATE TABLE {TABLE_NAME}"), ())
     }
 
     #[allow(unused)]
