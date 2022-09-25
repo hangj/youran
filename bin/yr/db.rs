@@ -1,13 +1,13 @@
 use anyhow::Result;
 use rusqlite::Connection;
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
 };
 
 const DEFAULT_DB_FILE: &'static str = "~/.config/youran/db.sqlite";
 const ENV_DB_FILE: &'static str = "YOURAN_DB_FILE";
 const TABLE_NAME: &'static str = "tb_kv";
+const INDEX_NAME: &'static str = "idx_timestamp";
 
 #[derive(Debug)]
 pub struct Db {
@@ -48,6 +48,12 @@ impl Db {
             ),
             (),
         )?;
+
+        self.conn.execute(
+            &format!("CREATE INDEX IF NOT EXISTS {INDEX_NAME} ON {TABLE_NAME}(timestamp)"),
+            ()
+        )?;
+
         Ok(())
     }
 
