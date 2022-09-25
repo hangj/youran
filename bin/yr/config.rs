@@ -32,9 +32,9 @@ pub enum Action {
     Qr(Get),
     /// set the value of the given key
     Set(Set),
-    /// list all the keys
+    /// list the latest updated key-values
     Ls(Ls),
-    /// clear all the keys
+    /// clear all the keys, empty the table
     Clear,
 }
 
@@ -52,7 +52,7 @@ pub struct Set {
 
 #[derive(Debug, Parser)]
 pub struct Ls {
-    /// maxium items returned
+    /// maxium records returned
     #[clap(long, value_parser, default_value_t=10, action = clap::ArgAction::Set)]
     pub limit: usize,
     /// offset
