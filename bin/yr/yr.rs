@@ -1,5 +1,9 @@
 use anyhow::Result;
-use std::{io::{Write, Read}, os::unix::prelude::OsStrExt, cmp::max};
+use std::{
+    cmp::max,
+    io::{Read, Write},
+    os::unix::prelude::OsStrExt,
+};
 
 mod config;
 mod db;
@@ -48,10 +52,7 @@ fn main() -> Result<()> {
         Action::Ls(ls) => {
             let entries = db.list(ls.limit, ls.offset)?;
 
-            let alignment = entries
-                .iter()
-                .fold(0, |acc, (key, _)| max(key.len(), acc))
-                + 4;
+            let alignment = entries.iter().fold(0, |acc, (key, _)| max(key.len(), acc)) + 4;
 
             for (key, value) in entries.iter() {
                 if args.verbose {
@@ -72,8 +73,6 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-
-
 
 #[test]
 fn test() -> Result<()> {

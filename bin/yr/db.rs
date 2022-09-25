@@ -1,8 +1,6 @@
 use anyhow::Result;
 use rusqlite::Connection;
-use std::{
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 const DEFAULT_DB_FILE: &'static str = "~/.config/youran/db.sqlite";
 const ENV_DB_FILE: &'static str = "YOURAN_DB_FILE";
@@ -51,7 +49,7 @@ impl Db {
 
         self.conn.execute(
             &format!("CREATE INDEX IF NOT EXISTS {INDEX_NAME} ON {TABLE_NAME}(timestamp)"),
-            ()
+            (),
         )?;
 
         Ok(())
@@ -109,8 +107,7 @@ impl Db {
     pub fn clear(&self) -> rusqlite::Result<usize> {
         // sqlite will do the truncate optimization
         // https://sqlite.org/lang_delete.html
-        self.conn
-            .execute(&format!("DELETE FROM {TABLE_NAME}"), ())
+        self.conn.execute(&format!("DELETE FROM {TABLE_NAME}"), ())
     }
 
     /// drop the table

@@ -3,4 +3,3 @@
 //! ```bash
 //! cargo install youran
 //! ```
-

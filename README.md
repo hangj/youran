@@ -15,8 +15,8 @@ cargo install youran
 cargo install youran --bin yr
 ```
 
-# yr: a personal key-value store
-It behaves like [kvass](https://github.com/maxmunzel/kvass), but `without a server side`(maybe temporally)  
+# yr: a super stupid simple personal key-value store
+It behaves like [kvass](https://github.com/maxmunzel/kvass)(which is written in go), but `without a server side`(maybe temporally)  
 
 ```bash
 $ yr
