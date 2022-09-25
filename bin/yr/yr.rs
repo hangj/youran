@@ -62,13 +62,17 @@ fn main() -> Result<()> {
 
 #[test]
 fn test() -> Result<()> {
-    let db = db::Db::from(Some("./test.db"))?;
+    let dbfile = "./test.db";
 
+    let db = db::Db::from(Some(dbfile))?;
     db.clear()?;
+
     assert_eq!(db.get("hello")?, None);
     assert_eq!(db.set("hello", "world 😊".as_bytes())?, 1);
     assert_eq!(db.get("hello")?.unwrap(), "world 😊".as_bytes());
     assert_eq!(db.delete("hello")?, 1);
+
+    db.drop_database()?;
 
     Ok(())
 }

@@ -11,6 +11,7 @@ const TABLE_NAME: &'static str = "tb_kv";
 
 #[derive(Debug)]
 pub struct Db {
+    dbfile: PathBuf,
     conn: Connection,
 }
 
@@ -30,7 +31,7 @@ impl Db {
 
         let conn = Connection::open(&dbfile)?;
 
-        let db = Db { conn };
+        let db = Db { dbfile, conn };
         db.prepare_table()?;
 
         Ok(db)
@@ -40,9 +41,9 @@ impl Db {
         self.conn.execute(
             &format!(
                 "CREATE TABLE IF NOT EXISTS {TABLE_NAME}(
-                key text primary key,
-                value blob
-            )"
+                    key text primary key,
+                    value blob
+                )"
             ),
             (),
         )?;
@@ -100,10 +101,17 @@ impl Db {
             .execute(&format!("DELETE FROM {TABLE_NAME}"), ())
     }
 
+    /// drop the table
     #[allow(unused)]
-    fn drop(&self) -> rusqlite::Result<usize> {
+    pub fn drop_table(&self) -> rusqlite::Result<usize> {
         self.conn
             .execute(&format!("DROP TABLE IF EXISTS {TABLE_NAME}"), [])
+    }
+
+    /// remove the dbfile
+    #[allow(unused)]
+    pub fn drop_database(&self) -> std::io::Result<()> {
+        std::fs::remove_file(self.dbfile.as_path())
     }
 }
 
