@@ -7,12 +7,15 @@ readme = "README.md"
 description = "code with peace"
 license = "MIT"
 repository = "https://github.com/hangj/youran"
+documentation = "https://docs.rs/youran/"
+exclude = ["/.github/*", "/.gitattributes", "/appveyor.yml", "/Changelog.md", "/clippy.toml", "/codecov.yml"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
 name = "yr"
 path = "bin/yr/yr.rs"
+
 
 [dependencies]
 anyhow = "1.0.65"
