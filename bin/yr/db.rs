@@ -92,9 +92,12 @@ impl Db {
             .execute(&format!("DELETE FROM {TABLE_NAME} WHERE key = ?1"), (key,))
     }
 
+    /// truncate table
     pub fn clear(&self) -> rusqlite::Result<usize> {
+        // sqlite will do the truncate optimization
+        // https://sqlite.org/lang_delete.html
         self.conn
-            .execute(&format!("TRUNCATE TABLE {TABLE_NAME}"), ())
+            .execute(&format!("DELETE FROM {TABLE_NAME}"), ())
     }
 
     #[allow(unused)]
