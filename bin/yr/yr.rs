@@ -52,7 +52,9 @@ fn main() -> Result<()> {
         Action::Ls(ls) => {
             let entries = db.list(ls.limit, ls.offset)?;
 
-            let alignment = entries.iter().fold(0, |acc, (key, _)| max(key.len(), acc)) + 4;
+            let alignment = entries.iter().fold(0, |acc, (key, _)| {
+                max(console::measure_text_width(key), acc)
+            }) + 4;
 
             for (key, value) in entries.iter() {
                 if args.verbose {
@@ -90,4 +92,17 @@ fn test() -> Result<()> {
     db.drop_database()?;
 
     Ok(())
+}
+
+#[test]
+fn string_length_in_terminal() {
+    let s1 = "😳";
+    let s2 = "abcd";
+
+    let l1 = s1.len();
+    let l2 = s2.len();
+
+    println!("l1: {}, l2: {}", l1, l2);
+    println!("{}", s1);
+    println!("{}", s2);
 }
