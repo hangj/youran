@@ -46,8 +46,8 @@ pub struct Get {
 #[derive(Debug, Parser)]
 pub struct Set {
     pub key: String,
-    #[clap(value_parser, default_value = "", action(clap::ArgAction::Set))] // allow invalid utf8
-    pub value: OsString,
+    #[clap(value_parser, action(clap::ArgAction::Set))] // allow invalid utf8
+    pub value: Option<OsString>,
 }
 
 #[derive(Debug, Parser)]

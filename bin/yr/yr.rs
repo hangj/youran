@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{io::Write, os::unix::prelude::OsStrExt};
+use std::{io::{Write, Read}, os::unix::prelude::OsStrExt, cmp::max};
 
 mod config;
 mod db;
@@ -30,21 +30,36 @@ fn main() -> Result<()> {
             }
         }
         Action::Set(Set { key, value }) => {
-            if !value.is_empty() {
-                db.set(&key, value.as_bytes())?;
+            let mut buf = Vec::new();
+            let value = if let Some(ref value) = value {
+                value.as_bytes()
             } else {
+                // when the value is not provided, we read from stdin
+                std::io::stdin().read_to_end(&mut buf)?;
+                &buf
+            };
+
+            if value.is_empty() {
                 db.delete(&key)?;
+            } else {
+                db.set(&key, value)?;
             }
         }
         Action::Ls(ls) => {
             let entries = db.list(ls.limit, ls.offset)?;
+
+            let alignment = entries
+                .iter()
+                .fold(0, |acc, (key, _)| max(key.len(), acc))
+                + 4;
 
             for (key, value) in entries.iter() {
                 if args.verbose {
                     println!("> {key}: {:?}", value);
                 }
 
-                print!("{key}: ");
+                // https://doc.rust-lang.org/std/fmt/index.html
+                print!("{:<alignment$}", format!("{key}:"));
                 std::io::stdout().write_all(&value)?;
                 std::io::stdout().flush()?;
                 println!();
