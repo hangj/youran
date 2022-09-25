@@ -85,6 +85,7 @@ fn test() -> Result<()> {
     assert_eq!(db.get("hello")?, None);
     assert_eq!(db.set("hello", "world 😊".as_bytes())?, 1);
     assert_eq!(db.get("hello")?.unwrap(), "world 😊".as_bytes());
+    db.list(10, 0)?;
     assert_eq!(db.delete("hello")?, 1);
 
     db.drop_database()?;

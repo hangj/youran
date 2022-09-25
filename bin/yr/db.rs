@@ -42,7 +42,8 @@ impl Db {
             &format!(
                 "CREATE TABLE IF NOT EXISTS {TABLE_NAME}(
                     key text primary key,
-                    value blob
+                    value blob,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )"
             ),
             (),
@@ -61,9 +62,9 @@ impl Db {
         Ok(None)
     }
 
-    pub fn list(&self, limit: usize, offset: usize) -> Result<HashMap<String, Vec<u8>>> {
+    pub fn list(&self, limit: usize, offset: usize) -> Result<Vec<(String, Vec<u8>)>> {
         let mut stmt = self.conn.prepare(&format!(
-            "SELECT key, value FROM {TABLE_NAME} LIMIT {limit} OFFSET {offset}"
+            "SELECT key, value FROM {TABLE_NAME} ORDER BY timestamp desc LIMIT {limit} OFFSET {offset}"
         ))?;
 
         let hm = stmt
@@ -81,6 +82,11 @@ impl Db {
     }
 
     pub fn set(&self, key: &str, value: &[u8]) -> rusqlite::Result<usize> {
+        // extern crate chrono;
+        // use chrono::prelude::*;
+        // let date : DateTime = Utc::now(); // Local::now();
+        // date.format("%Y-%m-%d %H:%M:%S").to_string();;
+
         // INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19
         self.conn.execute(
             &format!("REPLACE INTO {TABLE_NAME}(key, value) VALUES(?1, ?2)"),
