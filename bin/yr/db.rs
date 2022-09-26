@@ -38,10 +38,13 @@ impl Db {
     fn prepare_table(&self) -> Result<()> {
         self.conn.execute(
             &format!(
+                // The datatype is optional. 
+                // see <https://www.sqlite.org/quirks.html#the_datatype_is_optional>
+                // and <https://www.sqlite.org/datatype3.html#datatypes_in_sqlite>
                 "CREATE TABLE IF NOT EXISTS {TABLE_NAME}(
-                    key text primary key,
-                    value blob,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    key primary key,
+                    value,
+                    timestamp DEFAULT CURRENT_TIMESTAMP
                 )"
             ),
             (),
@@ -89,7 +92,8 @@ impl Db {
         // extern crate chrono;
         // use chrono::prelude::*;
         // let date : DateTime = Utc::now(); // Local::now();
-        // date.format("%Y-%m-%d %H:%M:%S").to_string();;
+        // date.format("%Y-%m-%d %H:%M:%S").to_string();
+        // Utc.datetime_from_str("2014-11-28 12:00:09", "%Y-%m-%d %H:%M:%S").unwrap();
 
         // INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19
         self.conn.execute(
