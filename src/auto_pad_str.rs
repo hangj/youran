@@ -2,6 +2,7 @@
 
 /// # Examples
 /// ```no_run
+/// use youran::auto_pad_str::*;
 /// fn main() {
 ///     let s1 = "hello 😊😊";
 ///     let s2 = "hello word";
@@ -28,6 +29,7 @@ impl<'a> AutoPadStr<'a> {
 
 /// # Examples
 /// ```no_run
+/// use youran::auto_pad_str::*;
 /// fn main() {
 ///     let s1 = "hello 😊😊";
 ///     let s2 = "hello word";
