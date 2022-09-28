@@ -3,3 +3,5 @@
 //! ```bash
 //! cargo install youran
 //! ```
+
+pub mod auto_pad_str;

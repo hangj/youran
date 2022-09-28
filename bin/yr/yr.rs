@@ -7,6 +7,8 @@ use std::{
 
 mod config;
 mod db;
+use youran::auto_pad_str::*;
+
 
 use config::*;
 
@@ -53,7 +55,7 @@ fn main() -> Result<()> {
             let entries = db.list(ls.limit, ls.offset)?;
 
             let alignment = entries.iter().fold(0, |acc, (key, _)| {
-                max(console::measure_text_width(key), acc)
+                max(key.as_auto_pad_str().rendered_len(), acc)
             }) + 4;
 
             for (key, value) in entries.iter() {
@@ -62,7 +64,8 @@ fn main() -> Result<()> {
                 }
 
                 // https://doc.rust-lang.org/std/fmt/index.html
-                print!("{:<alignment$}", format!("{key}:"));
+                print!("{:<alignment$}", format!("{key}:").as_auto_pad_str());
+                // print!("{:<alignment$}:  ", key.as_auto_pad_str());
                 std::io::stdout().write_all(&value)?;
                 std::io::stdout().flush()?;
                 println!();
@@ -94,15 +97,16 @@ fn test() -> Result<()> {
     Ok(())
 }
 
+
 #[test]
 fn string_length_in_terminal() {
-    let s1 = "😳";
-    let s2 = "abcd";
+    let s1 = "hello 😊😊";
+    let s2 = "hello word";
 
-    let l1 = s1.len();
-    let l2 = s2.len();
+    println!("{:<1$}|", s1, s1.len());
+    println!("{:<1$}|", s2, s1.len());
 
-    println!("l1: {}, l2: {}", l1, l2);
-    println!("{}", s1);
-    println!("{}", s2);
+    println!("{:<1$}|", s1.as_auto_pad_str(), s1.as_auto_pad_str().rendered_len());
+    println!("{:<1$}|", s2.as_auto_pad_str(), s1.as_auto_pad_str().rendered_len());
 }
+
