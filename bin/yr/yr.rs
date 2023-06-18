@@ -1,4 +1,4 @@
-use anyhow::Result;
+
 use std::{
     cmp::max,
     io::{Read, Write},
@@ -12,14 +12,15 @@ use youran::auto_pad_str::*;
 
 use config::*;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let args = config::parse_args()?;
 
-    let db = db::Db::from(args.db)?;
+    let db = db::Db::from(args.db).await?;
 
     match args.action {
         Action::Get(Get { ref key }) | Action::Qr(Get { ref key }) => {
-            let value = db.get(key)?;
+            let value = db.get(key).await?;
             if args.verbose {
                 println!("> value: {:#?}", value);
             }
@@ -46,13 +47,13 @@ fn main() -> Result<()> {
             };
 
             if value.is_empty() {
-                db.delete(&key)?;
+                db.delete(&key).await?;
             } else {
-                db.set(&key, value)?;
+                db.set(&key, value).await?;
             }
         }
         Action::Ls(ls) => {
-            let entries = db.list(ls.limit, ls.offset)?;
+            let entries = db.list(ls.limit, ls.offset).await?;
 
             let alignment = entries.iter().fold(0, |acc, (key, _)| {
                 max(key.as_auto_pad_str().rendered_len(), acc)
@@ -72,25 +73,25 @@ fn main() -> Result<()> {
             }
         }
         Action::Clear => {
-            db.clear()?;
+            db.clear().await?;
         }
     }
 
     Ok(())
 }
 
-#[test]
-fn test() -> Result<()> {
+#[tokio::test]
+async fn test() -> anyhow::Result<()> {
     let dbfile = "./test.db";
 
-    let db = db::Db::from(Some(dbfile))?;
-    db.clear()?;
+    let db = db::Db::from(Some(dbfile)).await?;
+    db.clear().await?;
 
-    assert_eq!(db.get("hello")?, None);
-    assert_eq!(db.set("hello", "world 😊".as_bytes())?, 1);
-    assert_eq!(db.get("hello")?.unwrap(), "world 😊".as_bytes());
-    db.list(10, 0)?;
-    assert_eq!(db.delete("hello")?, 1);
+    assert_eq!(db.get("hello").await?, None);
+    assert_eq!(db.set("hello", "world 😊".as_bytes()).await?, 1);
+    assert_eq!(db.get("hello").await?.unwrap(), "world 😊".as_bytes());
+    db.list(10, 0).await?;
+    assert_eq!(db.delete("hello").await?, 1);
 
     db.drop_database()?;
 
@@ -107,6 +108,6 @@ fn string_length_in_terminal() {
     println!("{:<1$}|", s2, s1.len());
 
     println!("{:<1$}|", s1.as_auto_pad_str(), s1.as_auto_pad_str().rendered_len());
-    println!("{:<1$}|", s2.as_auto_pad_str(), s1.as_auto_pad_str().rendered_len());
+    println!("{:<1$}|", s2.as_auto_pad_str(), s2.as_auto_pad_str().rendered_len());
 }
 

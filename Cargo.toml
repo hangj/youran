@@ -1,6 +1,6 @@
 [package]
 name = "youran"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["hangj <guijie.han@gmail.com>"]
 readme = "README.md"
@@ -19,10 +19,19 @@ path = "bin/yr/yr.rs"
 
 [dependencies]
 anyhow = "1.0.65"
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.3.4", features = ["derive"] }
 # console = "0.15.1"
-dirs = "4.0.0"
+dirs = "5.0.1"
 qr2term = "0.3.0"
-rusqlite = "0.28.0"
+# rusqlite = "0.28.0"
+sqlx = { version = "0.6.3", features = ["runtime-tokio-rustls", "sqlite", "migrate"] }
+tokio = { version = "1.28.2", features = ["macros"] }
 unicode-width = "0.1.10"
 
+
+[profile.release]
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
