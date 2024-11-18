@@ -18,15 +18,15 @@ path = "bin/yr/yr.rs"
 
 
 [dependencies]
-anyhow = "1.0.65"
-clap = { version = "4.3.4", features = ["derive"] }
+anyhow = "1.0.93"
+clap = { version = "4.5.21", features = ["derive"] }
 # console = "0.15.1"
 dirs = "5.0.1"
-qr2term = "0.3.0"
-# rusqlite = "0.28.0"
-sqlx = { version = "0.6.3", features = ["runtime-tokio-rustls", "sqlite", "migrate"] }
-tokio = { version = "1.28.2", features = ["macros"] }
-unicode-width = "0.1.10"
+image = "0.25.0"
+qr2term = "0.3.3"
+qrcode = "0.14.1"
+rusqlite = "0.32.1"
+unicode-width = "0.2.0"
 
 
 [profile.release]

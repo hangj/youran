@@ -14,9 +14,7 @@
 ///     println!("{:<1$}|", s2.as_auto_pad_str(), s1.as_auto_pad_str().rendered_len());
 /// }
 /// ```
-
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
-
 
 pub struct AutoPadStr<'a>(&'a str);
 
@@ -25,7 +23,6 @@ impl<'a> AutoPadStr<'a> {
         self.0.width()
     }
 }
-
 
 /// # Examples
 /// ```no_run
@@ -53,23 +50,24 @@ impl<'a, T: AsRef<str>> AsAutoPadStr for T {
 
 impl<'a> std::fmt::Display for AutoPadStr<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = 
-            if let Some(precision) = f.precision() {
-                let mut acc = 0_usize;
-                let mut idx = self.0.len();
-                for (i, w) in self.0.char_indices()
-                    .map(|(i, c)|(i, c.width().unwrap_or(0)))
-                {
-                    acc += w;
-                    if acc > precision {
-                        idx = i;
-                        break;
-                    }
+        let str = if let Some(precision) = f.precision() {
+            let mut acc = 0_usize;
+            let mut idx = self.0.len();
+            for (i, w) in self
+                .0
+                .char_indices()
+                .map(|(i, c)| (i, c.width().unwrap_or(0)))
+            {
+                acc += w;
+                if acc > precision {
+                    idx = i;
+                    break;
                 }
-                &self.0.get(..idx).unwrap()
-            } else {
-                self.0
-            };
+            }
+            &self.0.get(..idx).unwrap()
+        } else {
+            self.0
+        };
 
         let len = str.width();
 
@@ -84,16 +82,16 @@ impl<'a> std::fmt::Display for AutoPadStr<'a> {
                         std::fmt::Alignment::Left => {
                             write!(f, "{}", str)?;
                             write!(f, "{}", c.to_string().repeat(n))
-                        },
+                        }
                         std::fmt::Alignment::Right => {
                             write!(f, "{}", c.to_string().repeat(n))?;
                             write!(f, "{}", str)
-                        },
+                        }
                         std::fmt::Alignment::Center => {
-                            write!(f, "{}", c.to_string().repeat(n/2))?;
+                            write!(f, "{}", c.to_string().repeat(n / 2))?;
                             write!(f, "{}", str)?;
-                            write!(f, "{}", c.to_string().repeat(n - n/2))
-                        },
+                            write!(f, "{}", c.to_string().repeat(n - n / 2))
+                        }
                     }
                 } else {
                     write!(f, "{}", str)
@@ -102,6 +100,5 @@ impl<'a> std::fmt::Display for AutoPadStr<'a> {
         } else {
             write!(f, "{}", str)
         }
-
     }
 }

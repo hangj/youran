@@ -29,7 +29,7 @@ pub enum Action {
     /// get the value of the given key
     Get(Get),
     /// show the QRCode for the given key
-    Qr(Get),
+    Qr(Qr),
     /// set the value of the given key
     Set(Set),
     /// list the latest updated key-values
@@ -41,6 +41,15 @@ pub enum Action {
 #[derive(Debug, Parser)]
 pub struct Get {
     pub key: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct Qr {
+    pub key: String,
+    /// print qrcode to the terminal if not set, Or save it to output file, the extension of output
+    /// should be an image type(.png) or .svg
+    #[clap(short, long, value_parser, action(clap::ArgAction::Set))]
+    pub output: Option<std::path::PathBuf>,
 }
 
 #[derive(Debug, Parser)]

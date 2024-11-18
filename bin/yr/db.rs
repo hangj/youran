@@ -1,20 +1,20 @@
-use anyhow::{Result};
-// use rusqlite::Connection;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite, Row};
+use anyhow::Result;
+use rusqlite::Connection;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_DB_FILE: &'static str = "~/.config/youran/db.sqlite";
 const ENV_DB_FILE: &'static str = "YOURAN_DB_FILE";
 const TABLE_NAME: &'static str = "tb_kv";
+const INDEX_NAME: &'static str = "idx_timestamp";
 
 #[derive(Debug)]
 pub struct Db {
     dbfile: PathBuf,
-    conn: Pool<Sqlite>,
+    conn: Connection,
 }
 
 impl Db {
-    pub async fn from<P: AsRef<Path>>(path: Option<P>) -> Result<Db> {
+    pub fn from<P: AsRef<Path>>(path: Option<P>) -> Result<Db> {
         let dbfile = if let Some(path) = path {
             expand_tilde(path.as_ref()).unwrap()
         } else if let Ok(path) = std::env::var(ENV_DB_FILE) {
@@ -27,46 +27,68 @@ impl Db {
 
         std::fs::create_dir_all(dir)?;
 
-        let conn = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect(format!("sqlite://{}", dbfile.display()).as_str())
-            .await?;
-
-        sqlx::migrate!().run(&conn).await?;
+        let conn = Connection::open(&dbfile)?;
 
         let db = Db { dbfile, conn };
+        db.prepare_table()?;
 
         Ok(db)
     }
 
-    pub async fn get(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        let rows = sqlx::query(format!("SELECT value FROM {TABLE_NAME} where key=?").as_str())
-            .bind(key)
-            .fetch_all(&self.conn)
-            .await?;
+    fn prepare_table(&self) -> Result<()> {
+        self.conn.execute(
+            // The datatype is optional.
+            // see <https://www.sqlite.org/quirks.html#the_datatype_is_optional>
+            // and <https://www.sqlite.org/datatype3.html#datatypes_in_sqlite>
+            &format!(
+                "CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+                key primary key,
+                value,
+                timestamp DEFAULT CURRENT_TIMESTAMP
+            )"
+            ),
+            (),
+        )?;
 
-        if rows.is_empty() {
-            return Ok(None);
+        self.conn.execute(
+            &format!("CREATE INDEX IF NOT EXISTS {INDEX_NAME} ON {TABLE_NAME} (timestamp)"),
+            (),
+        )?;
+
+        Ok(())
+    }
+
+    pub fn get(&self, key: &str) -> Result<Option<Vec<u8>>> {
+        let mut stmt = self
+            .conn
+            .prepare(&format!("SELECT key,value FROM {TABLE_NAME} where key=?"))?;
+        let entries = stmt.query_map([key], |row| Ok(row.get::<usize, Vec<u8>>(1)?))?;
+        for value in entries {
+            return Ok(Some(value?));
         }
-
-        Ok(Some(rows[0].get("value")))
+        Ok(None)
     }
 
-    pub async fn list(&self, limit: usize, offset: usize) -> Result<Vec<(String, Vec<u8>)>> {
-        let rows = sqlx::query_as(
-            format!(
-                "SELECT key, value FROM {TABLE_NAME} ORDER BY timestamp desc LIMIT ? OFFSET ?"
-                ).as_str()
-            )
-            .bind(limit as u32)
-            .bind(offset as u32)
-            .fetch_all(&self.conn)
-            .await?;
+    pub fn list(&self, limit: usize, offset: usize) -> Result<Vec<(String, Vec<u8>)>> {
+        let mut stmt = self.conn.prepare(&format!(
+            "SELECT key, value FROM {TABLE_NAME} ORDER BY timestamp desc LIMIT {limit} OFFSET {offset}"
+        ))?;
 
-        Ok(rows)
+        let hm = stmt
+            .query_map([], |row| {
+                Ok((row.get::<usize, String>(0)?, row.get::<usize, Vec<u8>>(1)?))
+            })?
+            .into_iter()
+            // .inspect(|x| {
+            //     println!("x: {:#?}", x);
+            // })
+            .map(|v| v.unwrap())
+            .collect();
+
+        Ok(hm)
     }
 
-    pub async fn set(&self, key: &str, value: &[u8]) -> Result<u64> {
+    pub fn set(&self, key: &str, value: &[u8]) -> rusqlite::Result<usize> {
         // extern crate chrono;
         // use chrono::prelude::*;
         // let date : DateTime = Utc::now(); // Local::now();
@@ -74,40 +96,29 @@ impl Db {
         // Utc.datetime_from_str("2014-11-28 12:00:09", "%Y-%m-%d %H:%M:%S").unwrap();
 
         // INSERT INTO table (id, name, age) VALUES(1, "A", 19) ON DUPLICATE KEY UPDATE name="A", age=19
-
-        Ok(sqlx::query(format!("REPLACE INTO {TABLE_NAME}(key, value) VALUES(?, ?)").as_str())
-            .bind(key)
-            .bind(value)
-            .execute(&self.conn)
-            .await?
-            .rows_affected())
+        self.conn.execute(
+            &format!("REPLACE INTO {TABLE_NAME}(key, value) VALUES(?1, ?2)"),
+            (key, value),
+        )
     }
 
-    pub async fn delete(&self, key: &str) -> Result<u64> {
-        Ok(sqlx::query(format!("DELETE FROM {TABLE_NAME} WHERE key = ?").as_str())
-            .bind(key)
-            .execute(&self.conn)
-            .await?
-            .rows_affected())
+    pub fn delete(&self, key: &str) -> rusqlite::Result<usize> {
+        self.conn
+            .execute(&format!("DELETE FROM {TABLE_NAME} WHERE key = ?1"), (key,))
     }
 
     /// truncate table
-    pub async fn clear(&self) -> Result<()> {
+    pub fn clear(&self) -> rusqlite::Result<usize> {
         // sqlite will do the truncate optimization
         // https://sqlite.org/lang_delete.html
-        sqlx::query(format!("DELETE FROM {TABLE_NAME}").as_str())
-            .execute(&self.conn)
-            .await?;
-        Ok(())
+        self.conn.execute(&format!("DELETE FROM {TABLE_NAME}"), ())
     }
 
     /// drop the table
     #[allow(unused)]
-    pub async fn drop_table(&self) -> Result<()> {
-        sqlx::query(format!("DROP TABLE IF EXISTS {TABLE_NAME}").as_str())
-            .execute(&self.conn)
-            .await?;
-        Ok(())
+    pub fn drop_table(&self) -> rusqlite::Result<usize> {
+        self.conn
+            .execute(&format!("DROP TABLE IF EXISTS {TABLE_NAME}"), [])
     }
 
     /// remove the dbfile
