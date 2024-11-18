@@ -55,6 +55,8 @@ pub struct Qr {
 #[derive(Debug, Parser)]
 pub struct Set {
     pub key: String,
+    /// read from stdin if not provided.
+    /// the key will be deleted if value is empty.
     #[clap(value_parser, action(clap::ArgAction::Set))] // allow invalid utf8
     pub value: Option<OsString>,
 }
